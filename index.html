@@ -58,13 +58,25 @@ margin-right: auto;
 height: 300px;
 max-height: 350px;
 }
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3B82F6;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 </style>
 </head>
 <body class="bg-background text-textMain font-sans antialiased p-4 md:p-8">
 
 <div class="max-w-7xl mx-auto space-y-6">
 
-<!-- Control Bar (ປ່ຽນພາສາ & ສົ່ງອອກ) -->
+<!-- Control Bar ດ້ານເທິງ (ປ່ຽນພາສາ & ສົ່ງອອກ) -->
 <div class="flex flex-col sm:flex-row justify-end gap-4 mb-2 relative z-50">
     <button onclick="toggleLanguage()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 transition font-medium flex items-center gap-2">
         <span data-i18n="langBtn">🌐 ປ່ຽນເປັນ English</span>
@@ -80,6 +92,40 @@ max-height: 350px;
             <button onclick="exportExcel()" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50 flex items-center gap-2"><span class="text-green-500 font-bold">📊</span> Excel Format</button>
             <button onclick="exportWord()" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"><span class="text-blue-500 font-bold">📝</span> Word Format</button>
         </div>
+    </div>
+</div>
+
+<!-- 🤖 AI Analysis Panel -->
+<div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 shadow-sm mb-8" data-html2canvas-ignore>
+    <div class="flex items-center gap-3 mb-4">
+        <span class="text-3xl">🤖</span>
+        <h2 class="text-xl font-bold text-indigo-900" data-i18n="aiPanelTitle">ແຜງຄວບຄຸມ AI (ອັບເດດກຣາບອັດຕະໂນມັດ)</h2>
+    </div>
+    <p class="text-indigo-700 text-sm mb-6" data-i18n="aiPanelDesc">ອັບໂຫຼດຮູບພາບສະຕິກເກີໃໝ່ ເພື່ອໃຫ້ AI ວິເຄາະ, ນັບຈຳນວນ ແລະ ອັບເດດຂໍ້ມູນໃນ Dashboard ທັງໝົດທັນທີ.</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Input ສຳລັບຄວາມຄາດຫວັງ -->
+        <div class="bg-white p-4 rounded-xl border border-indigo-100">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">🔵 ອັບໂຫຼດຮູບ: ຄວາມຄາດຫວັງ (Expect)</label>
+            <input type="file" id="expectFileInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition" onchange="previewImage(event, 'expectImage')">
+        </div>
+
+        <!-- Input ສຳລັບຄວາມກັງວົນ -->
+        <div class="bg-white p-4 rounded-xl border border-indigo-100">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">🟢 ອັບໂຫຼດຮູບ: ຄວາມກັງວົນ (Concern)</label>
+            <input type="file" id="concernFileInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition" onchange="previewImage(event, 'concernImage')">
+        </div>
+    </div>
+
+    <div class="mt-6 flex flex-col items-center">
+        <button id="analyzeBtn" onclick="runAIAnalysis()" class="px-8 py-3 bg-indigo-600 text-white rounded-xl shadow-md hover:bg-indigo-700 transition font-bold flex items-center gap-3 text-lg">
+            <span>🚀</span> <span data-i18n="aiBtn">ວິເຄາະດ້ວຍ AI ແລະ ອັບເດດກຣາບ</span>
+        </button>
+        <div id="aiLoadingStatus" class="hidden flex items-center gap-3 mt-4 text-indigo-600 font-medium">
+            <div class="loader"></div>
+            <span id="aiLoadingText">AI ກຳລັງວິເຄາະຮູບພາບ... ອາດໃຊ້ເວລາ 10-20 ວິນາທີ</span>
+        </div>
+        <div id="aiErrorMsg" class="hidden mt-4 text-red-500 font-medium text-sm p-3 bg-red-50 border border-red-100 rounded-lg"></div>
     </div>
 </div>
 
@@ -99,14 +145,14 @@ max-height: 350px;
 <h2 class="text-xl font-semibold opacity-90 mb-1" data-i18n="expectTitle">🔵 ຄວາມຄາດຫວັງທັງໝົດ</h2>
 <p class="text-sm opacity-80" data-i18n="expectDesc">ຈຳນວນຄຳຄິດເຫັນ (ສະຕິກເກີສີຟ້າ)</p>
 </div>
-<div class="text-6xl font-bold">33</div>
+<div id="totalExpect" class="text-6xl font-bold">33</div>
 </div>
 <div class="bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between transform transition hover:scale-[1.02]">
 <div>
 <h2 class="text-xl font-semibold opacity-90 mb-1" data-i18n="concernTitle">🟢 ຄວາມກັງວົນທັງໝົດ</h2>
 <p class="text-sm opacity-80" data-i18n="concernDesc">ຈຳນວນຄຳຄິດເຫັນ (ສະຕິກເກີສີຂຽວ)</p>
 </div>
-<div class="text-6xl font-bold">33</div>
+<div id="totalConcern" class="text-6xl font-bold">33</div>
 </div>
 </div>
 
@@ -114,7 +160,7 @@ max-height: 350px;
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
 <div class="lg:col-span-1 space-y-4">
 <h2 class="text-2xl font-bold text-textMain border-b-2 border-blue-500 pb-2 inline-block" data-i18n="overviewTitle">ພາບລວມຄວາມຄິດເຫັນ</h2>
-<p class="text-textMuted leading-relaxed" data-i18n="overviewDesc1">
+<p class="text-textMuted leading-relaxed" data-i18n="overviewDesc1" id="overviewDescText">
 ຈາກການເກັບກຳຂໍ້ມູນ, ເຫັນໄດ້ວ່າຜູ້ເຂົ້າຮ່ວມມີສັດສ່ວນຂອງ <strong>ຄວາມກັງວົນ (50%)</strong> ແລະ <strong>ຄວາມຄາດຫວັງ (50%)</strong> ເຊິ່ງເທົ່າກັນພໍດີ.
 </p>
 <p class="text-textMuted leading-relaxed" data-i18n="overviewDesc2">
@@ -185,10 +231,221 @@ max-height: 350px;
 
 </div> <!-- End of exportableContent -->
 
+<!-- ປຸ່ມ ກັອບປີ້ຄຳສັ່ງ (Copy Prompt) ສະເພາະປຸ່ມນີ້ທີ່ຢູ່ດ້ານລຸ່ມ -->
+<div class="flex justify-center pt-2 pb-8 relative z-50">
+    <button onclick="copyPromptText()" class="px-6 py-3 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl shadow-sm hover:bg-indigo-100 transition font-medium flex items-center gap-2 text-lg">
+        <span id="copyIcon">📋</span> <span data-i18n="copyPrompt">ກັອບປີ້ຄຳສັ່ງ AI (ສຳລັບວິທີທີ 1)</span>
+    </button>
+</div>
+
 </div>
 
 <script>
-// ລະບົບໂຫຼດຮູບພາບແບບສະຫຼາດ (Smart Image Fallback)
+// -----------------------------------------
+// ລະບົບ AI Automated Dashboard (ວິທີທີ 2)
+// -----------------------------------------
+
+// API Key (Provided by runtime in Canvas environment)
+const apiKey = ""; 
+
+// ແປງ File ເປັນ Base64 string
+function getBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
+            if ((encoded.length % 4) > 0) {
+                encoded += '='.repeat(4 - (encoded.length % 4));
+            }
+            resolve(encoded);
+        };
+        reader.onerror = error => reject(error);
+    });
+}
+
+// ພຣີວິວຮູບເມື່ອອັບໂຫຼດ
+function previewImage(event, imgId) {
+    const file = event.target.files[0];
+    if (file) {
+        const imgElement = document.getElementById(imgId);
+        const loadingElement = document.getElementById(imgId.replace('Image', 'Loading'));
+        
+        imgElement.src = URL.createObjectURL(file);
+        loadingElement.style.display = 'none';
+        imgElement.classList.remove('hidden');
+    }
+}
+
+// ຟັງຊັນເອີ້ນໃຊ້ API ພ້ອມລະບົບ Retry
+const fetchWithBackoff = async (url, options, retries = 5) => {
+    const delays = [1000, 2000, 4000, 8000, 16000];
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        } catch (e) {
+            if (i === retries - 1) throw e;
+            await new Promise(res => setTimeout(res, delays[i]));
+        }
+    }
+};
+
+// ຟັງຊັນຫຼັກໃນການສົ່ງຮູບໄປວິເຄາະ
+async function callGeminiVision(base64Image, isExpect) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    
+    const promptText = isExpect 
+        ? "Analyze this image of BLUE sticky notes (Expectations). Count the total number of notes. Group them into exactly 5 logical categories summarizing the feedback. Provide the category name in both Lao and English, and the count for each category. Ensure the sum of category counts equals the total count."
+        : "Analyze this image of GREEN sticky notes (Concerns). Count the total number of notes. Group them into exactly 5 logical categories summarizing the feedback. Provide the category name in both Lao and English, and the count for each category. Ensure the sum of category counts equals the total count.";
+
+    const payload = {
+        contents: [{
+            parts: [
+                { text: promptText },
+                { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+            ]
+        }],
+        generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: "OBJECT",
+                properties: {
+                    totalCount: { type: "INTEGER" },
+                    categories: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                nameLao: { type: "STRING" },
+                                nameEn: { type: "STRING" },
+                                count: { type: "INTEGER" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    const data = await fetchWithBackoff(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    return JSON.parse(data.candidates[0].content.parts[0].text);
+}
+
+// ເມື່ອກົດປຸ່ມວິເຄາະ
+async function runAIAnalysis() {
+    const expFile = document.getElementById('expectFileInput').files[0];
+    const conFile = document.getElementById('concernFileInput').files[0];
+    const btn = document.getElementById('analyzeBtn');
+    const status = document.getElementById('aiLoadingStatus');
+    const errorMsg = document.getElementById('aiErrorMsg');
+
+    if (!expFile && !conFile) {
+        errorMsg.innerText = "ກະລຸນາອັບໂຫຼດຮູບພາບຢ່າງໜ້ອຍ 1 ຮູບກ່ອນວິເຄາະ.";
+        errorMsg.classList.remove('hidden');
+        return;
+    }
+
+    // Reset UI
+    errorMsg.classList.add('hidden');
+    btn.disabled = true;
+    btn.classList.add('opacity-50');
+    status.classList.remove('hidden');
+
+    try {
+        let expectData = null, concernData = null;
+
+        // ແປງໄຟລ໌ ແລະ ສົ່ງເຂົ້າ API ພ້ອມກັນ (ຖ້າມີ)
+        const promises = [];
+        if (expFile) {
+            promises.push(getBase64(expFile).then(b64 => callGeminiVision(b64, true)).then(res => expectData = res));
+        }
+        if (conFile) {
+            promises.push(getBase64(conFile).then(b64 => callGeminiVision(b64, false)).then(res => concernData = res));
+        }
+
+        await Promise.all(promises);
+
+        // --- ອັບເດດຂໍ້ມູນໃນໜ້າ Dashboard ---
+        updateDashboardWithAI(expectData, concernData);
+
+        // UI ສຳເລັດ
+        status.innerHTML = `<span class="text-green-500 font-bold">✅ ວິເຄາະ ແລະ ອັບເດດຂໍ້ມູນສຳເລັດແລ້ວ!</span>`;
+        setTimeout(() => {
+            status.classList.add('hidden');
+            status.innerHTML = `<div class="loader"></div><span id="aiLoadingText">AI ກຳລັງວິເຄາະຮູບພາບ... ອາດໃຊ້ເວລາ 10-20 ວິນາທີ</span>`;
+        }, 5000);
+
+    } catch (err) {
+        console.error(err);
+        errorMsg.innerText = "ເກີດຂໍ້ຜິດພາດໃນການວິເຄາະ: " + err.message;
+        errorMsg.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50');
+    }
+}
+
+// ອັບເດດກຣາບ ແລະ ຕົວເລກດ້ວຍຂໍ້ມູນຈາກ AI
+function updateDashboardWithAI(expectData, concernData) {
+    let newExpTotal = expectData ? expectData.totalCount : parseInt(document.getElementById('totalExpect').innerText);
+    let newConTotal = concernData ? concernData.totalCount : parseInt(document.getElementById('totalConcern').innerText);
+
+    // ອັບເດດຕົວເລກໃຫຍ່
+    if (expectData) document.getElementById('totalExpect').innerText = newExpTotal;
+    if (concernData) document.getElementById('totalConcern').innerText = newConTotal;
+
+    // ອັບເດດຄຳອະທິບາຍ Overview
+    let sumTotal = newExpTotal + newConTotal;
+    let expPer = Math.round((newExpTotal / sumTotal) * 100);
+    let conPer = Math.round((newConTotal / sumTotal) * 100);
+    
+    translations.lo.overviewDesc1 = `ຈາກການເກັບກຳຂໍ້ມູນ, ເຫັນໄດ້ວ່າຜູ້ເຂົ້າຮ່ວມມີສັດສ່ວນຂອງ <strong>ຄວາມກັງວົນ (${conPer}%)</strong> ແລະ <strong>ຄວາມຄາດຫວັງ (${expPer}%)</strong>.`;
+    translations.en.overviewDesc1 = `From the data collected, participants have a proportion of <strong>Concerns (${conPer}%)</strong> and <strong>Expectations (${expPer}%)</strong>.`;
+    
+    if(currentLang === 'lo') {
+        document.getElementById('overviewDescText').innerHTML = translations.lo.overviewDesc1;
+    } else {
+        document.getElementById('overviewDescText').innerHTML = translations.en.overviewDesc1;
+    }
+
+    // ອັບເດດ Doughnut Chart
+    overviewChartRef.data.datasets[0].data = [newExpTotal, newConTotal];
+    overviewChartRef.update();
+
+    // ອັບເດດ Expectation Chart
+    if (expectData && expectData.categories) {
+        expDataValue = expectData.categories.map(c => c.count);
+        translations.lo.expLabelsRaw = expectData.categories.map(c => c.nameLao);
+        translations.en.expLabelsRaw = expectData.categories.map(c => c.nameEn);
+        
+        expChartRef.data.labels = translations[currentLang].expLabelsRaw.map(wrapLabel);
+        expChartRef.data.datasets[0].data = expDataValue;
+        expChartRef.update();
+    }
+
+    // ອັບເດດ Concern Chart
+    if (concernData && concernData.categories) {
+        conDataValue = concernData.categories.map(c => c.count);
+        translations.lo.conLabelsRaw = concernData.categories.map(c => c.nameLao);
+        translations.en.conLabelsRaw = concernData.categories.map(c => c.nameEn);
+        
+        conChartRef.data.labels = translations[currentLang].conLabelsRaw.map(wrapLabel);
+        conChartRef.data.datasets[0].data = conDataValue;
+        conChartRef.update();
+    }
+}
+
+
+// -----------------------------------------
+// ລະບົບໂຫຼດຮູບພາບເລີ່ມຕົ້ນ (Fallback)
+// -----------------------------------------
 function loadImageWithFallback(imgId, loadingId, containerId, imageNames) {
     const imgElement = document.getElementById(imgId);
     const loadingElement = document.getElementById(loadingId);
@@ -200,8 +457,8 @@ function loadImageWithFallback(imgId, loadingId, containerId, imageNames) {
             currentIndex++;
         } else {
             loadingElement.innerHTML = `
-                <div class="text-red-500 font-medium p-4 border border-red-200 bg-red-50 rounded-lg">
-                    ❌ ບໍ່ສາມາດໂຫຼດຮູບພາບໄດ້
+                <div class="text-slate-500 font-medium p-4 bg-slate-50 rounded-lg">
+                    🖼️ ກະລຸນາອັບໂຫຼດຮູບພາບດ້ານເທິງ
                 </div>`;
             loadingElement.classList.remove('animate-pulse');
             imgElement.style.display = 'none';
@@ -231,6 +488,9 @@ const translations = {
     lo: {
         title: "📊 ບົດລວບລວມຄຳຄິດເຫັນຈາກຜູ້ເຂົ້າຮ່ວມ",
         subtitle: "ບົດສະຫຼຸບຂໍ້ມູນການສຳຫຼວດກ່ອນການຝຶກອົບຮົມ (Workshop Feedback) ໂດຍແບ່ງອອກເປັນ 2 ພາກສ່ວນຫຼັກຄື: ສິ່ງທີ່ຄາດຫວັງຢາກໄດ້ຮັບ ແລະ ສິ່ງທີ່ເປັນຄວາມກັງວົນໃຈ.",
+        aiPanelTitle: "ແຜງຄວບຄຸມ AI (ອັບເດດກຣາບອັດຕະໂນມັດ)",
+        aiPanelDesc: "ອັບໂຫຼດຮູບພາບສະຕິກເກີໃໝ່ ເພື່ອໃຫ້ AI ວິເຄາະ, ນັບຈຳນວນ ແລະ ອັບເດດຂໍ້ມູນໃນ Dashboard ທັງໝົດທັນທີ.",
+        aiBtn: "ວິເຄາະດ້ວຍ AI ແລະ ອັບເດດກຣາບ",
         expectTitle: "🔵 ຄວາມຄາດຫວັງທັງໝົດ",
         expectDesc: "ຈຳນວນຄຳຄິດເຫັນ (ສະຕິກເກີສີຟ້າ)",
         concernTitle: "🟢 ຄວາມກັງວົນທັງໝົດ",
@@ -249,6 +509,7 @@ const translations = {
         footer: "ສ້າງຂຶ້ນເພື່ອສະຫຼຸບຜົນການສຳຫຼວດກ່ອນການຝຶກອົບຮົມ (Workshop Pre-Assessment Dashboard).",
         export: "ສົ່ງອອກ (Export)",
         langBtn: "🌐 ປ່ຽນເປັນ English",
+        copyPrompt: "ກັອບປີ້ຄຳສັ່ງ AI (ສຳລັບວິທີທີ 1)",
         overviewLabels: ['ຄວາມຄາດຫວັງ (🔵)', 'ຄວາມກັງວົນ (🟢)'],
         expLabelsRaw: ['ໝວດການນຳໄປໃຊ້ໃນວຽກງານຕົວຈິງ', 'ໝວດຄວາມສະດວກ ວ່ອງໄວ ແລະ ປະຢັດເວລາ', 'ໝວດການຮຽນຮູ້ໂປຣແກຣມ ແລະ ເຕັກນິກໃໝ່ໆ', 'ໝວດລະບົບຂໍ້ມູນ ແລະ Dashboard', 'ໝວດວິທີການສອນ'],
         conLabelsRaw: ['ຄວາມເຂົ້າໃຈ ແລະ ພື້ນຖານຄວາມຮູ້', 'ການນຳໄປໃຊ້ ແລະ ຄວາມສອດຄ່ອງກັບວຽກ', 'ອຸປະກອນ ອິນເຕີເນັດ ແລະ ພາສາ', 'ເວລາ ແລະ ການຈັດສັນວຽກ', 'ອື່ນໆ'],
@@ -257,6 +518,9 @@ const translations = {
     en: {
         title: "📊 Participant Feedback Summary",
         subtitle: "Pre-assessment workshop feedback summary divided into two main parts: Expectations and Concerns.",
+        aiPanelTitle: "AI Control Panel (Auto-update Dashboard)",
+        aiPanelDesc: "Upload new sticky note images for AI to analyze, count, and instantly update the entire Dashboard data.",
+        aiBtn: "Analyze with AI & Update Charts",
         expectTitle: "🔵 Total Expectations",
         expectDesc: "Number of feedback (Blue stickers)",
         concernTitle: "🟢 Total Concerns",
@@ -275,6 +539,7 @@ const translations = {
         footer: "Created to summarize the Workshop Pre-Assessment Dashboard.",
         export: "Export Options",
         langBtn: "🌐 ປ່ຽນເປັນ ພາສາລາວ",
+        copyPrompt: "Copy AI Prompt (For Method 1)",
         overviewLabels: ['Expectations (🔵)', 'Concerns (🟢)'],
         expLabelsRaw: ['Practical Application', 'Convenience & Time Saving', 'Learning New Tools & Tech', 'Data Systems & Dashboards', 'Teaching Methods'],
         conLabelsRaw: ['Understanding & Basics', 'Application & Relevance', 'Equipment, Internet & Lang', 'Time & Task Management', 'Others'],
@@ -312,6 +577,27 @@ function toggleLanguage() {
 }
 
 // -----------------------------------------
+// ລະບົບກັອບປີ້ຄຳສັ່ງ (Copy Prompt Logic)
+// -----------------------------------------
+function copyPromptText() {
+    const promptText = "ຊ່ວຍອ່ານ, ນັບຈຳນວນສະຕິກເກີ, ຈັດໝວດໝູ່ໃຫ້ແນ່ ແລະ ເອົາຂໍ້ມູນໃໝ່ນີ້ໄປອັບເດດໃສ່ໂຄດ HTML ໃນ Canvas ໃຫ້ພ້ອມ";
+    
+    const tempInput = document.createElement("input");
+    tempInput.value = promptText;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand("copy");
+    document.body.removeChild(tempInput);
+
+    const iconSpan = document.getElementById('copyIcon');
+    const originalIcon = iconSpan.innerText;
+    iconSpan.innerText = "✅";
+    setTimeout(() => {
+        iconSpan.innerText = originalIcon;
+    }, 2000);
+}
+
+// -----------------------------------------
 // ລະບົບສົ່ງອອກ (Export Dropdown & Logic)
 // -----------------------------------------
 function toggleDropdown() {
@@ -342,7 +628,6 @@ function exportPdf() {
 
 function exportWord() {
     const content = document.getElementById('exportableContent').innerHTML;
-    // ສ້າງໄຟລ໌ Word ແບບງ່າຍໆ ໂດຍໃຊ້ HTML Blob
     const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Workshop Feedback</title></head><body>";
     const footer = "</body></html>";
     const sourceHTML = header + content + footer;
@@ -357,8 +642,9 @@ function exportWord() {
     toggleDropdown();
 }
 
-const expDataValue = [12, 8, 6, 4, 3]; 
-const conDataValue = [12, 8, 6, 5, 2];
+// ປ່ຽນຄ່າເຫຼົ່ານີ້ເປັນ let ເພື່ອໃຫ້ AI ສາມາດຂຽນທັບໄດ້
+let expDataValue = [12, 8, 6, 4, 3]; 
+let conDataValue = [12, 8, 6, 5, 2];
 
 function exportExcel() {
     const wb = XLSX.utils.book_new();
@@ -367,8 +653,8 @@ function exportExcel() {
     // Sheet 1: ພາບລວມ (Overview)
     const wsOverview = XLSX.utils.aoa_to_sheet([
         ['Category / ໝວດໝູ່', 'Count / ຈຳນວນ'],
-        [t.overviewLabels[0], 33],
-        [t.overviewLabels[1], 33]
+        [t.overviewLabels[0], document.getElementById('totalExpect').innerText],
+        [t.overviewLabels[1], document.getElementById('totalConcern').innerText]
     ]);
     XLSX.utils.book_append_sheet(wb, wsOverview, "Overview");
 
