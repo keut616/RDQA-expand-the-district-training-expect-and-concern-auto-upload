@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ບົດລວບລວມຄຳຄິດເຫັນຈາກຜູ້ເຂົ້າຮ່ວມ (Workshop Feedback)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+<!-- ເພີ່ມ Library ສຳລັບ Export PDF ແລະ Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+tailwind.config = {
+theme: {
+extend: {
+fontFamily: {
+sans: ['"Noto Sans Lao"', 'sans-serif'],
+},
+colors: {
+primary: '#10B981',
+primaryDark: '#059669',
+secondary: '#F59E0B',
+secondaryDark: '#D97706',
+surface: '#FFFFFF',
+background: '#F8FAFC',
+textMain: '#1E293B',
+textMuted: '#64748B'
+}
+}
+}
+}
+</script>
+<style>
+.chart-container {
+position: relative;
+width: 100%;
+max-width: 800px;
+margin-left: auto;
+margin-right: auto;
+height: 350px;
+max-height: 400px;
+}
+@media (min-width: 768px) {
+.chart-container {
+height: 400px;
+}
+}
+.chart-container-small {
+position: relative;
+width: 100%;
+max-width: 400px;
+margin-left: auto;
+margin-right: auto;
+height: 300px;
+max-height: 350px;
+}
+</style>
+</head>
+<body class="bg-background text-textMain font-sans antialiased p-4 md:p-8">
+
+<div class="max-w-7xl mx-auto space-y-6">
+
+<!-- Control Bar (ປ່ຽນພາສາ & ສົ່ງອອກ) -->
+<div class="flex flex-col sm:flex-row justify-end gap-4 mb-2 relative z-50">
+    <button onclick="toggleLanguage()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg shadow-sm hover:bg-slate-50 transition font-medium flex items-center gap-2">
+        <span data-i18n="langBtn">🌐 ປ່ຽນເປັນ English</span>
+    </button>
+    
+    <div class="relative">
+        <button onclick="toggleDropdown()" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition font-medium flex items-center gap-2 w-full sm:w-auto justify-center">
+            <span data-i18n="export">ສົ່ງອອກ (Export)</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        <div id="exportDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
+            <button onclick="exportPdf()" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50 flex items-center gap-2"><span class="text-red-500 font-bold">📄</span> PDF Format</button>
+            <button onclick="exportExcel()" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50 flex items-center gap-2"><span class="text-green-500 font-bold">📊</span> Excel Format</button>
+            <button onclick="exportWord()" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2"><span class="text-blue-500 font-bold">📝</span> Word Format</button>
+        </div>
+    </div>
+</div>
+
+<!-- ສ່ວນທີ່ຈະຖືກ Export ເປັນ PDF ແລະ Word -->
+<div id="exportableContent" class="space-y-8 bg-background pb-4">
+
+<header class="text-center bg-surface p-8 rounded-2xl shadow-sm border border-slate-100">
+<h1 class="text-3xl md:text-5xl font-bold text-textMain mb-4" data-i18n="title">📊 ບົດລວບລວມຄຳຄິດເຫັນຈາກຜູ້ເຂົ້າຮ່ວມ</h1>
+<p class="text-lg md:text-xl text-textMuted max-w-3xl mx-auto" data-i18n="subtitle">
+ບົດສະຫຼຸບຂໍ້ມູນການສຳຫຼວດກ່ອນການຝຶກອົບຮົມ (Workshop Feedback) ໂດຍແບ່ງອອກເປັນ 2 ພາກສ່ວນຫຼັກຄື: ສິ່ງທີ່ຄາດຫວັງຢາກໄດ້ຮັບ ແລະ ສິ່ງທີ່ເປັນຄວາມກັງວົນໃຈ.
+</p>
+</header>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between transform transition hover:scale-[1.02]">
+<div>
+<h2 class="text-xl font-semibold opacity-90 mb-1" data-i18n="expectTitle">🔵 ຄວາມຄາດຫວັງທັງໝົດ</h2>
+<p class="text-sm opacity-80" data-i18n="expectDesc">ຈຳນວນຄຳຄິດເຫັນ (ສະຕິກເກີສີຟ້າ)</p>
+</div>
+<div class="text-6xl font-bold">33</div>
+</div>
+<div class="bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between transform transition hover:scale-[1.02]">
+<div>
+<h2 class="text-xl font-semibold opacity-90 mb-1" data-i18n="concernTitle">🟢 ຄວາມກັງວົນທັງໝົດ</h2>
+<p class="text-sm opacity-80" data-i18n="concernDesc">ຈຳນວນຄຳຄິດເຫັນ (ສະຕິກເກີສີຂຽວ)</p>
+</div>
+<div class="text-6xl font-bold">33</div>
+</div>
+</div>
+
+<div class="bg-surface rounded-2xl shadow-sm p-6 md:p-8 border border-slate-100">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+<div class="lg:col-span-1 space-y-4">
+<h2 class="text-2xl font-bold text-textMain border-b-2 border-blue-500 pb-2 inline-block" data-i18n="overviewTitle">ພາບລວມຄວາມຄິດເຫັນ</h2>
+<p class="text-textMuted leading-relaxed" data-i18n="overviewDesc1">
+ຈາກການເກັບກຳຂໍ້ມູນ, ເຫັນໄດ້ວ່າຜູ້ເຂົ້າຮ່ວມມີສັດສ່ວນຂອງ <strong>ຄວາມກັງວົນ (50%)</strong> ແລະ <strong>ຄວາມຄາດຫວັງ (50%)</strong> ເຊິ່ງເທົ່າກັນພໍດີ.
+</p>
+<p class="text-textMuted leading-relaxed" data-i18n="overviewDesc2">
+ນີ້ສະແດງໃຫ້ເຫັນວ່າຜູ້ເຂົ້າຮ່ວມມີຄວາມກະຕືລືລົ້ນຢາກຮຽນຮູ້ສິ່ງໃໝ່ໆ ແຕ່ໃນຂະນະດຽວກັນກໍມີຄວາມກັງວົນກ່ຽວກັບພື້ນຖານຂອງຕົນເອງ ແລະ ຄວາມສາມາດໃນການນຳໄປໃຊ້ແທ້ ເຊິ່ງເປັນຈຸດສຳຄັນທີ່ວິທະຍາກອນຕ້ອງນຳໄປປັບປຸງວິທີການສອນ.
+</p>
+<ul class="space-y-2 mt-4">
+<li class="flex items-center text-blue-600 font-semibold"><span class="mr-2">📈</span> <span data-i18n="point1">ພ້ອມທີ່ຈະພັດທະນາຕົນເອງ</span></li>
+<li class="flex items-center text-emerald-600 font-semibold"><span class="mr-2">⚠️</span> <span data-i18n="point2">ຕ້ອງການການສະໜັບສະໜູນພື້ນຖານ</span></li>
+</ul>
+</div>
+<div class="lg:col-span-2">
+<div class="chart-container-small">
+<canvas id="overviewChart"></canvas>
+</div>
+</div>
+</div>
+</div>
+
+<div class="bg-surface rounded-2xl shadow-sm p-6 md:p-8 border border-slate-100">
+<div class="mb-6">
+<h2 class="text-2xl font-bold text-textMain border-b-2 border-blue-500 pb-2 inline-block" data-i18n="chartExpectTitle">🔵 ວິເຄາະ: ຄວາມຄາດຫວັງ (Expectations)</h2>
+<p class="text-textMuted mt-3 max-w-4xl" data-i18n="chartExpectDesc">
+ເມື່ອເຈາະເລິກລົງໃນໝວດໝູ່ຂອງຄວາມຄາດຫວັງ, ເຫັນໄດ້ຢ່າງຊັດເຈນວ່າຈຸດປະສົງຫຼັກຂອງຜູ້ເຂົ້າຮ່ວມແມ່ນ <strong>"ການນຳໄປໃຊ້ໃນວຽກງານຕົວຈິງ"</strong>. ພວກເຂົາຕ້ອງການໃຫ້ການຝຶກອົບຮົມຄັ້ງນີ້ຊ່ວຍແກ້ໄຂບັນຫາ, ຫຼຸດຜ່ອນຂັ້ນຕອນທີ່ຊ້ຳຊ້ອນ ແລະ ສາມາດສ້າງ Dashboard ທີ່ເປັນປະໂຫຍດໄດ້ແທ້.
+</p>
+</div>
+<div class="chart-container">
+<canvas id="expectationsChart"></canvas>
+</div>
+</div>
+
+<div class="bg-surface rounded-2xl shadow-sm p-6 md:p-8 border border-slate-100">
+<div class="mb-6">
+<h2 class="text-2xl font-bold text-textMain border-b-2 border-emerald-500 pb-2 inline-block" data-i18n="chartConcernTitle">🟢 ວິເຄາະ: ຄວາມກັງວົນ (Concerns)</h2>
+<p class="text-textMuted mt-3 max-w-4xl" data-i18n="chartConcernDesc">
+ສຳລັບຄວາມກັງວົນ, ສອງອັນດັບທຳອິດທີ່ໂດດເດັ່ນທີ່ສຸດແມ່ນ <strong>"ຄວາມເຂົ້າໃຈ ແລະ ພື້ນຖານຄວາມຮູ້"</strong> ຕິດພັນກັບ <strong>"ການນຳໄປໃຊ້ ແລະ ຄວາມສອດຄ່ອງກັບວຽກ"</strong>. ຜູ້ເຂົ້າຮ່ວມຢ້ານວ່າຈະຕາມບໍ່ທັນເນື່ອງຈາກພື້ນຖານອ່ອນ ແລະ ຢ້ານວ່າເນື້ອຫາຈະບໍ່ກົງກັບໜ້າວຽກທີ່ຕົນເອງຮັບຜິດຊອບ ເຊິ່ງອາດເຮັດໃຫ້ຮຽນໄປແລ້ວລືມ. ນອກຈາກນີ້ຍັງມີຄວາມກັງວົນເລື່ອງອຸປະກອນ ແລະ ສັນຍານອິນເຕີເນັດ.
+</p>
+</div>
+<div class="chart-container">
+<canvas id="concernsChart"></canvas>
+</div>
+</div>
+
+<div class="bg-surface rounded-2xl shadow-sm p-6 md:p-8 border border-slate-100" data-html2canvas-ignore>
+<div class="mb-6 flex flex-col md:flex-row md:items-start justify-between gap-4">
+<div>
+<h2 class="text-2xl font-bold text-textMain border-b-2 border-slate-300 pb-2 inline-block" data-i18n="appendixTitle">📎 ເອກະສານຊ້ອນທ້າຍ: ຮູບພາບການສະແດງຄວາມຄິດເຫັນ</h2>
+<p class="text-textMuted mt-3" data-i18n="appendixDesc">ພາບຕົ້ນສະບັບການຕິດສະຕິກເກີສະແດງຄວາມຄິດເຫັນຂອງຜູ້ເຂົ້າຮ່ວມ.</p>
+</div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+<div id="expectImageContainer" class="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50 flex flex-col items-center justify-center relative min-h-[300px] p-2 text-center">
+<img id="expectImage" alt="ຮູບພາບສະຕິກເກີຄວາມຄາດຫວັງ" class="w-full h-auto max-h-[600px] object-contain hover:scale-105 transition-transform duration-300 z-10 hidden">
+<div id="expectLoading" class="text-slate-500 animate-pulse">ກຳລັງໂຫຼດຮູບພາບ...</div>
+</div>
+
+<div id="concernImageContainer" class="rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50 flex flex-col items-center justify-center relative min-h-[300px] p-2 text-center">
+<img id="concernImage" alt="ຮູບພາບສະຕິກເກີຄວາມກັງວົນ" class="w-full h-auto max-h-[600px] object-contain hover:scale-105 transition-transform duration-300 z-10 hidden">
+<div id="concernLoading" class="text-slate-500 animate-pulse">ກຳລັງໂຫຼດຮູບພາບ...</div>
+</div>
+</div>
+
+</div>
+
+<footer class="text-center text-textMuted text-sm py-6">
+<p data-i18n="footer">ສ້າງຂຶ້ນເພື່ອສະຫຼຸບຜົນການສຳຫຼວດກ່ອນການຝຶກອົບຮົມ (Workshop Pre-Assessment Dashboard).</p>
+</footer>
+
+</div> <!-- End of exportableContent -->
+
+</div>
+
+<script>
+// ລະບົບໂຫຼດຮູບພາບແບບສະຫຼາດ (Smart Image Fallback)
+function loadImageWithFallback(imgId, loadingId, containerId, imageNames) {
+    const imgElement = document.getElementById(imgId);
+    const loadingElement = document.getElementById(loadingId);
+    let currentIndex = 0;
+
+    function tryNextImage() {
+        if (currentIndex < imageNames.length) {
+            imgElement.src = imageNames[currentIndex];
+            currentIndex++;
+        } else {
+            loadingElement.innerHTML = `
+                <div class="text-red-500 font-medium p-4 border border-red-200 bg-red-50 rounded-lg">
+                    ❌ ບໍ່ສາມາດໂຫຼດຮູບພາບໄດ້
+                </div>`;
+            loadingElement.classList.remove('animate-pulse');
+            imgElement.style.display = 'none';
+        }
+    }
+
+    imgElement.onload = function() {
+        loadingElement.style.display = 'none';
+        imgElement.classList.remove('hidden');
+    };
+    imgElement.onerror = tryNextImage;
+    tryNextImage();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadImageWithFallback('expectImage', 'expectLoading', 'expectImageContainer', ['Expect.jpeg', 'expect.jpeg', 'Expect.jpg', 'expect.jpg']);
+    loadImageWithFallback('concernImage', 'concernLoading', 'concernImageContainer', ['Concern.jpeg', 'concern.jpeg', 'Concern.jpg', 'concern.jpg']);
+});
+
+// -----------------------------------------
+// ລະບົບປ່ຽນພາສາ (Language Toggle System)
+// -----------------------------------------
+let currentLang = 'lo';
+let overviewChartRef, expChartRef, conChartRef;
+
+const translations = {
+    lo: {
+        title: "📊 ບົດລວບລວມຄຳຄິດເຫັນຈາກຜູ້ເຂົ້າຮ່ວມ",
+        subtitle: "ບົດສະຫຼຸບຂໍ້ມູນການສຳຫຼວດກ່ອນການຝຶກອົບຮົມ (Workshop Feedback) ໂດຍແບ່ງອອກເປັນ 2 ພາກສ່ວນຫຼັກຄື: ສິ່ງທີ່ຄາດຫວັງຢາກໄດ້ຮັບ ແລະ ສິ່ງທີ່ເປັນຄວາມກັງວົນໃຈ.",
+        expectTitle: "🔵 ຄວາມຄາດຫວັງທັງໝົດ",
+        expectDesc: "ຈຳນວນຄຳຄິດເຫັນ (ສະຕິກເກີສີຟ້າ)",
+        concernTitle: "🟢 ຄວາມກັງວົນທັງໝົດ",
+        concernDesc: "ຈຳນວນຄຳຄິດເຫັນ (ສະຕິກເກີສີຂຽວ)",
+        overviewTitle: "ພາບລວມຄວາມຄິດເຫັນ",
+        overviewDesc1: "ຈາກການເກັບກຳຂໍ້ມູນ, ເຫັນໄດ້ວ່າຜູ້ເຂົ້າຮ່ວມມີສັດສ່ວນຂອງ <strong>ຄວາມກັງວົນ (50%)</strong> ແລະ <strong>ຄວາມຄາດຫວັງ (50%)</strong> ເຊິ່ງເທົ່າກັນພໍດີ.",
+        overviewDesc2: "ນີ້ສະແດງໃຫ້ເຫັນວ່າຜູ້ເຂົ້າຮ່ວມມີຄວາມກະຕືລືລົ້ນຢາກຮຽນຮູ້ສິ່ງໃໝ່ໆ ແຕ່ໃນຂະນະດຽວກັນກໍມີຄວາມກັງວົນກ່ຽວກັບພື້ນຖານຂອງຕົນເອງ ແລະ ຄວາມສາມາດໃນການນຳໄປໃຊ້ແທ້ ເຊິ່ງເປັນຈຸດສຳຄັນທີ່ວິທະຍາກອນຕ້ອງນຳໄປປັບປຸງວິທີການສອນ.",
+        point1: "ພ້ອມທີ່ຈະພັດທະນາຕົນເອງ",
+        point2: "ຕ້ອງການການສະໜັບສະໜູນພື້ນຖານ",
+        chartExpectTitle: "🔵 ວິເຄາະ: ຄວາມຄາດຫວັງ (Expectations)",
+        chartExpectDesc: "ເມື່ອເຈາະເລິກລົງໃນໝວດໝູ່ຂອງຄວາມຄາດຫວັງ, ເຫັນໄດ້ຢ່າງຊັດເຈນວ່າຈຸດປະສົງຫຼັກຂອງຜູ້ເຂົ້າຮ່ວມແມ່ນ <strong>\"ການນຳໄປໃຊ້ໃນວຽກງານຕົວຈິງ\"</strong>. ພວກເຂົາຕ້ອງການໃຫ້ການຝຶກອົບຮົມຄັ້ງນີ້ຊ່ວຍແກ້ໄຂບັນຫາ, ຫຼຸດຜ່ອນຂັ້ນຕອນທີ່ຊ້ຳຊ້ອນ ແລະ ສາມາດສ້າງ Dashboard ທີ່ເປັນປະໂຫຍດໄດ້ແທ້.",
+        chartConcernTitle: "🟢 ວິເຄາະ: ຄວາມກັງວົນ (Concerns)",
+        chartConcernDesc: "ສຳລັບຄວາມກັງວົນ, ສອງອັນດັບທຳອິດທີ່ໂດດເດັ່ນທີ່ສຸດແມ່ນ <strong>\"ຄວາມເຂົ້າໃຈ ແລະ ພື້ນຖານຄວາມຮູ້\"</strong> ຕິດພັນກັບ <strong>\"ການນຳໄປໃຊ້ ແລະ ຄວາມສອດຄ່ອງກັບວຽກ\"</strong>. ຜູ້ເຂົ້າຮ່ວມຢ້ານວ່າຈະຕາມບໍ່ທັນເນື່ອງຈາກພື້ນຖານອ່ອນ ແລະ ຢ້ານວ່າເນື້ອຫາຈະບໍ່ກົງກັບໜ້າວຽກທີ່ຕົນເອງຮັບຜິດຊອບ ເຊິ່ງອາດເຮັດໃຫ້ຮຽນໄປແລ້ວລືມ. ນອກຈາກນີ້ຍັງມີຄວາມກັງວົນເລື່ອງອຸປະກອນ ແລະ ສັນຍານອິນເຕີເນັດ.",
+        appendixTitle: "📎 ເອກະສານຊ້ອນທ້າຍ: ຮູບພາບການສະແດງຄວາມຄິດເຫັນ",
+        appendixDesc: "ພາບຕົ້ນສະບັບການຕິດສະຕິກເກີສະແດງຄວາມຄິດເຫັນຂອງຜູ້ເຂົ້າຮ່ວມ.",
+        footer: "ສ້າງຂຶ້ນເພື່ອສະຫຼຸບຜົນການສຳຫຼວດກ່ອນການຝຶກອົບຮົມ (Workshop Pre-Assessment Dashboard).",
+        export: "ສົ່ງອອກ (Export)",
+        langBtn: "🌐 ປ່ຽນເປັນ English",
+        overviewLabels: ['ຄວາມຄາດຫວັງ (🔵)', 'ຄວາມກັງວົນ (🟢)'],
+        expLabelsRaw: ['ໝວດການນຳໄປໃຊ້ໃນວຽກງານຕົວຈິງ', 'ໝວດຄວາມສະດວກ ວ່ອງໄວ ແລະ ປະຢັດເວລາ', 'ໝວດການຮຽນຮູ້ໂປຣແກຣມ ແລະ ເຕັກນິກໃໝ່ໆ', 'ໝວດລະບົບຂໍ້ມູນ ແລະ Dashboard', 'ໝວດວິທີການສອນ'],
+        conLabelsRaw: ['ຄວາມເຂົ້າໃຈ ແລະ ພື້ນຖານຄວາມຮູ້', 'ການນຳໄປໃຊ້ ແລະ ຄວາມສອດຄ່ອງກັບວຽກ', 'ອຸປະກອນ ອິນເຕີເນັດ ແລະ ພາສາ', 'ເວລາ ແລະ ການຈັດສັນວຽກ', 'ອື່ນໆ'],
+        datasetLabel: 'ຈຳນວນຄຳຄິດເຫັນ'
+    },
+    en: {
+        title: "📊 Participant Feedback Summary",
+        subtitle: "Pre-assessment workshop feedback summary divided into two main parts: Expectations and Concerns.",
+        expectTitle: "🔵 Total Expectations",
+        expectDesc: "Number of feedback (Blue stickers)",
+        concernTitle: "🟢 Total Concerns",
+        concernDesc: "Number of feedback (Green stickers)",
+        overviewTitle: "Feedback Overview",
+        overviewDesc1: "From the data collected, participants have an equal proportion of <strong>Concerns (50%)</strong> and <strong>Expectations (50%)</strong>.",
+        overviewDesc2: "This shows that participants are eager to learn new things, but at the same time are concerned about their foundational skills and practical application. This is an important point for instructors to adapt their teaching methods.",
+        point1: "Ready for self-development",
+        point2: "Needs foundational support",
+        chartExpectTitle: "🔵 Analysis: Expectations",
+        chartExpectDesc: "When diving deeper into expectations, the main goal of participants is <strong>\"Practical Application\"</strong>. They want the workshop to help solve problems, reduce repetitive tasks, and create truly useful Dashboards.",
+        chartConcernTitle: "🟢 Analysis: Concerns",
+        chartConcernDesc: "For concerns, the top two prominent issues are <strong>\"Understanding & Knowledge Basics\"</strong> tied with <strong>\"Application & Job Relevance\"</strong>. Participants fear falling behind due to weak fundamentals and worry the content might not match their responsibilities. Additionally, there are concerns about equipment and internet connectivity.",
+        appendixTitle: "📎 Appendix: Original Feedback Images",
+        appendixDesc: "Original images of participant feedback stickers.",
+        footer: "Created to summarize the Workshop Pre-Assessment Dashboard.",
+        export: "Export Options",
+        langBtn: "🌐 ປ່ຽນເປັນ ພາສາລາວ",
+        overviewLabels: ['Expectations (🔵)', 'Concerns (🟢)'],
+        expLabelsRaw: ['Practical Application', 'Convenience & Time Saving', 'Learning New Tools & Tech', 'Data Systems & Dashboards', 'Teaching Methods'],
+        conLabelsRaw: ['Understanding & Basics', 'Application & Relevance', 'Equipment, Internet & Lang', 'Time & Task Management', 'Others'],
+        datasetLabel: 'Number of Feedback'
+    }
+};
+
+function toggleLanguage() {
+    currentLang = currentLang === 'lo' ? 'en' : 'lo';
+    const t = translations[currentLang];
+
+    // ອັບເດດຂໍ້ຄວາມໃນ HTML ຕາມ data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+            el.innerHTML = t[key];
+        }
+    });
+
+    // ອັບເດດພາສາໃນ ກຣາບ
+    if (overviewChartRef) {
+        overviewChartRef.data.labels = t.overviewLabels;
+        overviewChartRef.update();
+    }
+    if (expChartRef) {
+        expChartRef.data.labels = t.expLabelsRaw.map(wrapLabel);
+        expChartRef.data.datasets[0].label = t.datasetLabel;
+        expChartRef.update();
+    }
+    if (conChartRef) {
+        conChartRef.data.labels = t.conLabelsRaw.map(wrapLabel);
+        conChartRef.data.datasets[0].label = t.datasetLabel;
+        conChartRef.update();
+    }
+}
+
+// -----------------------------------------
+// ລະບົບສົ່ງອອກ (Export Dropdown & Logic)
+// -----------------------------------------
+function toggleDropdown() {
+    document.getElementById('exportDropdown').classList.toggle('hidden');
+}
+
+window.addEventListener('click', function(e) {
+    if (!e.target.closest('.relative')) {
+        const dropdown = document.getElementById('exportDropdown');
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+        }
+    }
+});
+
+function exportPdf() {
+    const element = document.getElementById('exportableContent');
+    const opt = {
+      margin:       [0.3, 0.3, 0.3, 0.3],
+      filename:     'Workshop_Feedback_Report.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+    toggleDropdown();
+}
+
+function exportWord() {
+    const content = document.getElementById('exportableContent').innerHTML;
+    // ສ້າງໄຟລ໌ Word ແບບງ່າຍໆ ໂດຍໃຊ້ HTML Blob
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Workshop Feedback</title></head><body>";
+    const footer = "</body></html>";
+    const sourceHTML = header + content + footer;
+    
+    const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    const fileDownload = document.createElement("a");
+    document.body.appendChild(fileDownload);
+    fileDownload.href = source;
+    fileDownload.download = 'Workshop_Feedback_Report.doc';
+    fileDownload.click();
+    document.body.removeChild(fileDownload);
+    toggleDropdown();
+}
+
+const expDataValue = [12, 8, 6, 4, 3]; 
+const conDataValue = [12, 8, 6, 5, 2];
+
+function exportExcel() {
+    const wb = XLSX.utils.book_new();
+    const t = translations[currentLang];
+
+    // Sheet 1: ພາບລວມ (Overview)
+    const wsOverview = XLSX.utils.aoa_to_sheet([
+        ['Category / ໝວດໝູ່', 'Count / ຈຳນວນ'],
+        [t.overviewLabels[0], 33],
+        [t.overviewLabels[1], 33]
+    ]);
+    XLSX.utils.book_append_sheet(wb, wsOverview, "Overview");
+
+    // Sheet 2: ຄວາມຄາດຫວັງ (Expectations)
+    const expDataSheet = [['Category / ໝວດໝູ່', 'Count / ຈຳນວນ']];
+    t.expLabelsRaw.forEach((label, i) => {
+        expDataSheet.push([label, expDataValue[i]]);
+    });
+    const wsExpect = XLSX.utils.aoa_to_sheet(expDataSheet);
+    XLSX.utils.book_append_sheet(wb, wsExpect, "Expectations");
+
+    // Sheet 3: ຄວາມກັງວົນ (Concerns)
+    const conDataSheet = [['Category / ໝວດໝູ່', 'Count / ຈຳນວນ']];
+    t.conLabelsRaw.forEach((label, i) => {
+        conDataSheet.push([label, conDataValue[i]]);
+    });
+    const wsConcern = XLSX.utils.aoa_to_sheet(conDataSheet);
+    XLSX.utils.book_append_sheet(wb, wsConcern, "Concerns");
+
+    XLSX.writeFile(wb, "Workshop_Feedback_Data.xlsx");
+    toggleDropdown();
+}
+
+// -----------------------------------------
+// ໂຄດສ້າງກຣາບ (Chart.js)
+// -----------------------------------------
+Chart.register(ChartDataLabels);
+
+const tooltipConfig = {
+tooltip: {
+callbacks: {
+title: function(tooltipItems) {
+const item = tooltipItems[0];
+let label = item.chart.data.labels[item.dataIndex];
+if (Array.isArray(label)) return label.join(' ');
+return label;
+},
+label: function(context) {
+let label = context.dataset.label || context.label || '';
+let value = context.raw;
+let sum = 0;
+context.chart.data.datasets[0].data.forEach(data => { sum += data; });
+let percentage = Math.round(value * 100 / sum) + '%';
+return `${label ? label + ': ' : ''}${value} (${percentage})`;
+}
+}
+}
+};
+
+const sharedDatalabels = {
+anchor: 'end', align: 'end', color: '#475569',
+font: { weight: 'bold', size: 12 },
+formatter: (value, ctx) => {
+let sum = 0;
+ctx.chart.data.datasets[0].data.map(data => { sum += data; });
+return Math.round(value * 100 / sum) + "%";
+}
+};
+
+function wrapLabel(label) {
+if (label.length <= 16) return [label];
+const words = label.split(' ');
+if (words.length === 1) return [label.substring(0, 16) + '-', label.substring(16)];
+let lines = [], currentLine = '';
+words.forEach(word => {
+if ((currentLine + word).length > 16) {
+if (currentLine) lines.push(currentLine.trim());
+currentLine = word + ' ';
+} else currentLine += word + ' ';
+});
+if (currentLine) lines.push(currentLine.trim());
+return lines;
+}
+
+Chart.defaults.font.family = '"Noto Sans Lao", sans-serif';
+Chart.defaults.color = '#64748B';
+
+const overviewCtx = document.getElementById('overviewChart').getContext('2d');
+overviewChartRef = new Chart(overviewCtx, {
+type: 'doughnut',
+data: {
+labels: ['ຄວາມຄາດຫວັງ (🔵)', 'ຄວາມກັງວົນ (🟢)'],
+datasets: [{
+data: [33, 33], backgroundColor: ['#3B82F6', '#10B981'], borderWidth: 0, hoverOffset: 4
+}]
+},
+options: {
+maintainAspectRatio: false,
+plugins: {
+...tooltipConfig,
+datalabels: {
+color: '#ffffff', font: { weight: 'bold', size: 16 },
+formatter: (value, ctx) => {
+let sum = 0; ctx.chart.data.datasets[0].data.map(data => { sum += data; });
+return Math.round(value * 100 / sum) + "%";
+}
+},
+legend: { position: 'bottom', labels: { font: { size: 14, weight: '500' }, padding: 20 } }
+},
+cutout: '70%'
+}
+});
+
+const expLabelsWrapped = translations['lo'].expLabelsRaw.map(wrapLabel);
+const expCtx = document.getElementById('expectationsChart').getContext('2d');
+expChartRef = new Chart(expCtx, {
+type: 'bar',
+data: {
+labels: expLabelsWrapped,
+datasets: [{
+label: 'ຈຳນວນຄຳຄິດເຫັນ', data: expDataValue,
+backgroundColor: 'rgba(59, 130, 246, 0.8)', borderColor: '#3B82F6', borderWidth: 1, borderRadius: 4
+}]
+},
+options: {
+layout: { padding: { top: 25 } }, maintainAspectRatio: false,
+plugins: { ...tooltipConfig, datalabels: sharedDatalabels, legend: { display: false } },
+scales: {
+y: { beginAtZero: true, ticks: { stepSize: 2 }, grid: { color: 'rgba(226, 232, 240, 0.5)' } },
+x: { grid: { display: false }, ticks: { font: { size: 12 } } }
+}
+}
+});
+
+const conLabelsWrapped = translations['lo'].conLabelsRaw.map(wrapLabel);
+const conCtx = document.getElementById('concernsChart').getContext('2d');
+conChartRef = new Chart(conCtx, {
+type: 'bar',
+data: {
+labels: conLabelsWrapped,
+datasets: [{
+label: 'ຈຳນວນຄຳຄິດເຫັນ', data: conDataValue,
+backgroundColor: 'rgba(16, 185, 129, 0.8)', borderColor: '#10B981', borderWidth: 1, borderRadius: 4
+}]
+},
+options: {
+indexAxis: 'y', layout: { padding: { right: 40 } }, maintainAspectRatio: false,
+plugins: { ...tooltipConfig, datalabels: sharedDatalabels, legend: { display: false } },
+scales: {
+x: { beginAtZero: true, ticks: { stepSize: 2 }, grid: { color: 'rgba(226, 232, 240, 0.5)' } },
+y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+}
+}
+});
+</script>
+</body>
+</html>
